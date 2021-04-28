@@ -3,7 +3,7 @@
 namespace Juce.Tween
 {
     [CustomEditor(typeof(JuceTween))]
-    public class JuceTweenCE : Editor
+    public class JuceTweenEditor : Editor
     {
         private JuceTween CustomTarget => (JuceTween)target;
 
