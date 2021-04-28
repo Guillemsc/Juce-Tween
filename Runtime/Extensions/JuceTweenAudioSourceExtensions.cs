@@ -3,17 +3,25 @@ using UnityEngine;
 
 public static class JuceTweenAudioSourceExtensions
 {
-    public static Tween TweenVolume(this AudioSource audioSource, float to, float duration)
+    public static ITween TweenVolume(this AudioSource audioSource, float to, float duration)
     {
-        Tween tween = Tween.To(() => audioSource.volume, x => audioSource.volume = x, () => to, duration);
-        tween.SetTarget(audioSource);
-        return tween;
+        return Tween.To(
+            () => audioSource.volume, 
+            x => audioSource.volume = x, 
+            () => to, 
+            duration,
+            () => audioSource != null
+            );
     }
 
-    public static Tween TweenPitch(this AudioSource audioSource, float to, float duration)
+    public static ITween TweenPitch(this AudioSource audioSource, float to, float duration)
     {
-        Tween tween = Tween.To(() => audioSource.pitch, x => audioSource.pitch = x, () => to, duration);
-        tween.SetTarget(audioSource);
-        return tween;
+        return Tween.To(
+            () => audioSource.pitch, 
+            x => audioSource.pitch = x, 
+            () => to, 
+            duration,
+            () => audioSource != null
+            );
     }
 }

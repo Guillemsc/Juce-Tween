@@ -1,12 +1,16 @@
-﻿using System;
+﻿using Juce.Tween.Easing;
+using System;
 
-namespace Juce.Tween
+namespace Juce.Tween.Interpolators
 {
-    internal class IntInterpolator : IInterpolator<int>
+    public class IntInterpolator : IInterpolator<int>
     {
         public int Evaluate(int initialValue, int finalValue, float time, EaseDelegate easeFunction)
         {
-            if (easeFunction == null) throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(IntInterpolator)}");
+            if (easeFunction == null)
+            {
+                throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(IntInterpolator)}");
+            }
 
             return (int)easeFunction(initialValue, finalValue, time);
         }

@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿using Juce.Tween.Interpolators;
+using UnityEngine;
 
-namespace Juce.Tween
+namespace Juce.Tween.Tweeners
 {
-    internal class ColorTweener : Tweener<Color>
+    public class ColorTweener : Tweener<Color>
     {
-        internal ColorTweener(Getter currValueGetter, Setter setter, Getter finalValueGetter, float duration)
-            : base(currValueGetter, setter, finalValueGetter, duration, new ColorInterpolator())
+        internal ColorTweener(Getter currValueGetter, Setter setter, Getter finalValueGetter, float duration, Validation validation)
+            : base(currValueGetter, setter, finalValueGetter, duration, new ColorInterpolator(), validation)
         {
         }
     }

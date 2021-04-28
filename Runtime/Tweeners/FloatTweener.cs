@@ -1,9 +1,11 @@
-﻿namespace Juce.Tween
+﻿using Juce.Tween.Interpolators;
+
+namespace Juce.Tween.Tweeners
 {
-    internal class FloatTweener : Tweener<float>
+    public class FloatTweener : Tweener<float>
     {
-        internal FloatTweener(Getter currValueGetter, Setter setter, Getter finalValueGetter, float duration)
-            : base(currValueGetter, setter, finalValueGetter, duration, new FloatInterpolator())
+        internal FloatTweener(Getter currValueGetter, Setter setter, Getter finalValueGetter, float duration, Validation validation)
+            : base(currValueGetter, setter, finalValueGetter, duration, new FloatInterpolator(), validation)
         {
         }
     }

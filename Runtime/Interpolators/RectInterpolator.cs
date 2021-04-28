@@ -1,13 +1,17 @@
-﻿using System;
+﻿using Juce.Tween.Easing;
+using System;
 using UnityEngine;
 
-namespace Juce.Tween
+namespace Juce.Tween.Interpolators
 {
-    internal class RectInterpolator : IInterpolator<Rect>
+    public class RectInterpolator : IInterpolator<Rect>
     {
         public Rect Evaluate(Rect initialValue, Rect finalValue, float time, EaseDelegate easeFunction)
         {
-            if (easeFunction == null) throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(Rect)}");
+            if (easeFunction == null)
+            {
+                throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(Rect)}");
+            }
 
             return new Rect(
                 easeFunction(initialValue.x, finalValue.x, time),

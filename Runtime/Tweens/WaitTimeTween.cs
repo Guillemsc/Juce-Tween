@@ -1,11 +1,11 @@
-﻿using UnityEngine;
+﻿using Juce.Tween.Easing;
+using UnityEngine;
 
 namespace Juce.Tween
 {
     public class WaitTimeTween : Tween
     {
         private readonly float duration;
-
         private float elapsedTime;
 
         public WaitTimeTween(float duration)
@@ -13,36 +13,66 @@ namespace Juce.Tween
             this.duration = duration;
         }
 
-        protected override void StartInternal()
+        public override void OnTimeScaleChanges(float timeScale)
         {
-            elapsedTime = 0.0f;
 
-            if (duration <= 0)
-            {
-                MarkAsFinished();
-            }
         }
 
-        protected override void UpdateInternal()
+        public override void OnEaseDelegateChanges(EaseDelegate easeFunction)
         {
-            float dt = Time.deltaTime * JuceTween.TimeScale * TimeScale;
+
+        }
+
+        public override void OnLoopFinished(LoopResetMode loopResetMode)
+        {
+            elapsedTime = 0.0f;
+        }
+
+        public override void Start()
+        {
+            if (IsPlaying)
+            {
+                Kill();
+            }
+
+            MarkStart();
+
+            elapsedTime = 0.0f;
+        }
+
+        public override void Update()
+        {
+            float dt = Time.unscaledDeltaTime * JuceTween.TimeScale * TimeScale;
 
             elapsedTime += dt;
 
             if (elapsedTime >= duration)
             {
-                MarkAsFinished();
+                MarkFinish(canLoop: true);
             }
         }
 
-        protected override float GetDurationInternal()
+        public override void Complete()
         {
-            return duration;
+            elapsedTime = duration;
+
+            MarkFinish(canLoop: false);
         }
 
-        protected override float GetProgressInternal()
+        public override void Kill()
         {
-            return elapsedTime / duration;
+            elapsedTime = duration;
+
+            MarkFinish(canLoop: false);
+        }
+
+        public override void Reset()
+        {
+            Kill();
+
+            elapsedTime = 0.0f;
+
+            MarkReset();
         }
     }
 }

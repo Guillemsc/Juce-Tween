@@ -1,13 +1,17 @@
-﻿using System;
+﻿using Juce.Tween.Easing;
+using System;
 using UnityEngine;
 
-namespace Juce.Tween
+namespace Juce.Tween.Interpolators
 {
     internal class Vector4Interpolator : IInterpolator<Vector4>
     {
         public Vector4 Evaluate(Vector4 initialValue, Vector4 finalValue, float time, EaseDelegate easeFunction)
         {
-            if (easeFunction == null) throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(Vector4Interpolator)}");
+            if (easeFunction == null)
+            {
+                throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(Vector4Interpolator)}");
+            }
 
             return new Vector4(
                 easeFunction(initialValue.x, finalValue.x, time),

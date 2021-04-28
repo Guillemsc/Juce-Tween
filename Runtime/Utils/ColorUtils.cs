@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Juce.Tween
+namespace Juce.Tween.Utils
 {
     internal static class ColorUtils
     {

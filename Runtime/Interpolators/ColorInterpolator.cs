@@ -1,13 +1,17 @@
-﻿using System;
+﻿using Juce.Tween.Easing;
+using System;
 using UnityEngine;
 
-namespace Juce.Tween
+namespace Juce.Tween.Interpolators
 {
-    internal class ColorInterpolator : IInterpolator<Color>
+    public class ColorInterpolator : IInterpolator<Color>
     {
         public Color Evaluate(Color initialValue, Color finalValue, float time, EaseDelegate easeFunction)
         {
-            if (easeFunction == null) throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(ColorInterpolator)}");
+            if (easeFunction == null)
+            {
+                throw new ArgumentNullException($"Tried to Evaluate with a null {nameof(EaseDelegate)} on {nameof(ColorInterpolator)}");
+            }
 
             return new Color(
                 easeFunction(initialValue.r, finalValue.r, time),

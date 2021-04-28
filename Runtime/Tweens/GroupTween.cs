@@ -1,182 +1,174 @@
-﻿using System;
+﻿using Juce.Tween.Easing;
+using System;
 using System.Collections.Generic;
 
 namespace Juce.Tween
 {
     public class GroupTween : Tween
     {
-        private readonly List<Tween> allTweens = new List<Tween>();
-        private int tweensLeftToFinish;
+        private readonly List<Tween> tweens = new List<Tween>();
+        private readonly List<Tween> playingTweens = new List<Tween>();
 
-        protected override void SetUseGeneralTimeScaleInternal(bool set)
+        public override void OnTimeScaleChanges(float timeScale)
         {
-            for (int i = 0; i < allTweens.Count; ++i)
+            foreach (Tween tween in tweens)
             {
-                allTweens[i].SetUseGeneralTimeScale(set);
+                tween.OnTimeScaleChanges(timeScale);
             }
         }
 
-        protected override void SetTimeScaleInternal(float timeScale)
+        public override void OnEaseDelegateChanges(EaseDelegate easeFunction)
         {
-            for (int i = 0; i < allTweens.Count; ++i)
+            foreach (Tween tween in tweens)
             {
-                allTweens[i].SetTimeScale(timeScale);
+                tween.OnEaseDelegateChanges(easeFunction);
             }
         }
 
-        protected override void SetEaseInternal(EaseDelegate easeFunction)
+        public override void OnLoopFinished(LoopResetMode loopResetMode)
         {
-            for (int i = 0; i < allTweens.Count; ++i)
+            for (int i = tweens.Count - 1; i >= 0; --i)
             {
-                allTweens[i].SetEase(easeFunction);
+                Tween tween = tweens[i];
+
+                tween.OnLoopFinished(loopResetMode);
             }
+
+            StartTweens();
         }
 
-        protected override void ActivateInternal()
+        public override void Start()
         {
-            for (int i = 0; i < allTweens.Count; ++i)
+            if (IsPlaying)
             {
-                allTweens[i].Activate();
+                Kill();
             }
+
+            MarkStart();
+
+            StartTweens();
         }
 
-        protected override void StartInternal()
+        public override void Update()
         {
-            tweensLeftToFinish = allTweens.Count;
-        }
-
-        protected override void CompleteInternal()
-        {
-            for (int i = 0; i < allTweens.Count; ++i)
+            for (int i = playingTweens.Count - 1; i >= 0; --i)
             {
-                Tween currTween = allTweens[i];
+                Tween tween = playingTweens[i];
 
-                if (!currTween.IsPlaying && !currTween.IsCompletedOrKilled)
+                tween.Update();
+
+                if (!tween.IsPlaying)
                 {
-                    currTween.Start();
-                }
-
-                if (currTween.IsPlaying)
-                {
-                    currTween.Complete();
-                }
-            }
-
-            tweensLeftToFinish = 0;
-        }
-
-        protected override void KillInternal()
-        {
-            for (int i = 0; i < allTweens.Count; ++i)
-            {
-                Tween currTween = allTweens[i];
-
-                if (currTween.IsPlaying)
-                {
-                    currTween.Kill();
+                    playingTweens.RemoveAt(i);
                 }
             }
 
-            tweensLeftToFinish = 0;
-        }
-
-        protected override void ResetInternal(ResetMode resetMode)
-        {
-            for (int i = allTweens.Count - 1; i >= 0; --i)
+            if (playingTweens.Count == 0)
             {
-                Tween currTween = allTweens[i];
-
-                currTween.Reset(resetMode);
-
-                currTween.Activate();
+                MarkFinish(canLoop: true);
             }
         }
 
-        protected override void UpdateInternal()
+        public override void Complete()
         {
-            bool finished = TweenUtils.UpdateSimultaneous(allTweens, tweensLeftToFinish);
-
-            if (finished)
+            if(!IsPlaying)
             {
-                MarkAsFinished();
-            }
-        }
-
-        protected override float GetDurationInternal()
-        {
-            float duration = 0.0f;
-
-            for (int i = 0; i < allTweens.Count; ++i)
-            {
-                Tween currTween = allTweens[i];
-
-                float currDuration = currTween.GetDuration();
-
-                if (currDuration > duration)
-                {
-                    duration = currDuration;
-                }
+                Start();
             }
 
-            return duration;
-        }
-
-        protected override float GetProgressInternal()
-        {
-            float progress = float.MaxValue;
-
-            for (int i = 0; i < allTweens.Count; ++i)
+            foreach(Tween tween in playingTweens)
             {
-                Tween currTween = allTweens[i];
-
-                float currProgress = currTween.GetProgress();
-
-                if (currProgress < progress)
-                {
-                    progress = currProgress;
-                }
+                tween.Complete();
             }
 
-            return progress;
+            playingTweens.Clear();
+
+            MarkFinish(canLoop: false);
         }
 
-        public override int GetNestedTweenChildsCount()
+        public override void Kill()
         {
-            int nestedChilds = 0;
-
-            for (int i = 0; i < allTweens.Count; ++i)
+            if (!IsPlaying)
             {
-                nestedChilds += allTweens[i].GetNestedTweenChildsCount() + 1;
+                return;
             }
 
-            return nestedChilds;
+            foreach (Tween tween in playingTweens)
+            {
+                tween.Kill();
+            }
+
+            playingTweens.Clear();
+
+            MarkKilled();
         }
 
-        public void Add(Tween tween)
+        public override void Reset()
         {
-            if (tween == null)
+            Kill();
+
+            for (int i = tweens.Count - 1; i >= 0; --i)
+            {
+                Tween tween = tweens[i];
+
+                tween.Reset();
+            }
+
+            MarkReset();
+        }
+
+        public void Add(ITween tween)
+        {
+            Tween castedTween = tween as Tween;
+
+            if(castedTween == null)
             {
                 throw new ArgumentNullException($"Tried to {nameof(Add)} a null {nameof(Tween)} on {nameof(GroupTween)}");
             }
 
-            if (IsPlaying)
+            if(IsPlaying)
             {
                 return;
             }
 
-            if (tween.IsPlaying)
+            if(tween.IsPlaying)
             {
                 return;
             }
 
-            if (tween.IsNested)
+            if(castedTween.IsNested)
             {
                 return;
             }
 
-            tween.IsNested = true;
+            castedTween.IsNested = true;
 
-            allTweens.Add(tween);
+            tweens.Add(castedTween);
+        }
+
+        private void StartTweens()
+        {
+            playingTweens.Clear();
+            playingTweens.AddRange(tweens);
+
+            for (int i = playingTweens.Count - 1; i >= 0; --i)
+            {
+                Tween tween = playingTweens[i];
+
+                tween.SetEase(EaseFunction);
+
+                tween.Start();
+
+                if (!tween.IsPlaying)
+                {
+                    playingTweens.RemoveAt(i);
+                }
+            }
+
+            if (playingTweens.Count == 0)
+            {
+                MarkFinish(canLoop: true);
+            }
         }
     }
 }

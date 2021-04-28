@@ -1,8 +1,8 @@
 ﻿namespace Juce.Tween
 {
-    public enum ResetMode
+    public enum LoopResetMode
     {
-        RestartValues,
+        InitialValues,
         CurrentValues,
         IncrementalValues,
     }

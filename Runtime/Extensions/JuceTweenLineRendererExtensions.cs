@@ -1,26 +1,34 @@
 ﻿using Juce.Tween;
 using UnityEngine;
 
-public static class LineRendererExtensions
+public static class JuceTweenLineRendererExtensions
 {
-    public static Tween TweenStartColor(this LineRenderer lineRenderer, Color to, float duration)
+    public static ITween TweenStartColor(this LineRenderer lineRenderer, Color to, float duration)
     {
-        Tween tween = Tween.To(() => lineRenderer.startColor, x => lineRenderer.startColor = x, () => to, duration);
-        tween.SetTarget(lineRenderer);
-        return tween;
+        return Tween.To(
+            () => lineRenderer.startColor, 
+            x => lineRenderer.startColor = x, 
+            () => to, 
+            duration,
+            () => lineRenderer != null
+            );
     }
 
-    public static Tween TweenEndColor(this LineRenderer lineRenderer, Color to, float duration)
+    public static ITween TweenEndColor(this LineRenderer lineRenderer, Color to, float duration)
     {
-        Tween tween = Tween.To(() => lineRenderer.endColor, x => lineRenderer.endColor = x, () => to, duration);
-        tween.SetTarget(lineRenderer);
-        return tween;
+        return Tween.To(
+            () => lineRenderer.endColor, 
+            x => lineRenderer.endColor = x, 
+            () => to, 
+            duration,
+            () => lineRenderer != null
+            );
     }
 
-    public static Tween TweenColor(this LineRenderer lineRenderer, Color to, float duration)
+    public static ITween TweenColor(this LineRenderer lineRenderer, Color to, float duration)
     {
-        Tween startTween = TweenStartColor(lineRenderer, to, duration);
-        Tween endTween = TweenEndColor(lineRenderer, to, duration);
+        ITween startTween = TweenStartColor(lineRenderer, to, duration);
+        ITween endTween = TweenEndColor(lineRenderer, to, duration);
 
         GroupTween groupTween = new GroupTween();
         groupTween.Add(startTween);
@@ -29,24 +37,32 @@ public static class LineRendererExtensions
         return groupTween;
     }
 
-    public static Tween TweenStartWidth(this LineRenderer lineRenderer, float to, float duration)
+    public static ITween TweenStartWidth(this LineRenderer lineRenderer, float to, float duration)
     {
-        Tween tween = Tween.To(() => lineRenderer.startWidth, x => lineRenderer.startWidth = x, () => to, duration);
-        tween.SetTarget(lineRenderer);
-        return tween;
+        return Tween.To(
+            () => lineRenderer.startWidth, 
+            x => lineRenderer.startWidth = x, 
+            () => to, 
+            duration,
+            () => lineRenderer != null
+            );
     }
 
-    public static Tween TweenEndWidth(this LineRenderer lineRenderer, float to, float duration)
+    public static ITween TweenEndWidth(this LineRenderer lineRenderer, float to, float duration)
     {
-        Tween tween = Tween.To(() => lineRenderer.endWidth, x => lineRenderer.endWidth = x, () => to, duration);
-        tween.SetTarget(lineRenderer);
-        return tween;
+        return Tween.To(
+            () => lineRenderer.endWidth, 
+            x => lineRenderer.endWidth = x, 
+            () => to, 
+            duration,
+            () => lineRenderer != null
+            );
     }
 
-    public static Tween TweenWidth(this LineRenderer lineRenderer, float to, float duration)
+    public static ITween TweenWidth(this LineRenderer lineRenderer, float to, float duration)
     {
-        Tween startTween = TweenStartWidth(lineRenderer, to, duration);
-        Tween endTween = TweenEndWidth(lineRenderer, to, duration);
+        ITween startTween = TweenStartWidth(lineRenderer, to, duration);
+        ITween endTween = TweenEndWidth(lineRenderer, to, duration);
 
         GroupTween groupTween = new GroupTween();
         groupTween.Add(startTween);

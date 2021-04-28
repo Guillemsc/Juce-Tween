@@ -4,24 +4,32 @@ using UnityEngine.UI;
 
 public static class JuceTweenLayoutElementExtensions
 {
-    public static Tween TweenFlexibleWidth(this LayoutElement layoutElement, float to, float duration)
+    public static ITween TweenFlexibleWidth(this LayoutElement layoutElement, float to, float duration)
     {
-        Tween tween = Tween.To(() => layoutElement.flexibleWidth, x => layoutElement.flexibleWidth = x, () => to, duration);
-        tween.SetTarget(layoutElement);
-        return tween;
+        return Tween.To(
+            () => layoutElement.flexibleWidth, 
+            x => layoutElement.flexibleWidth = x, 
+            () => to, 
+            duration,
+            () => layoutElement != null
+            );
     }
 
-    public static Tween TweenFlexibleHeight(this LayoutElement layoutElement, float to, float duration)
+    public static ITween TweenFlexibleHeight(this LayoutElement layoutElement, float to, float duration)
     {
-        Tween tween = Tween.To(() => layoutElement.flexibleHeight, x => layoutElement.flexibleHeight = x, () => to, duration);
-        tween.SetTarget(layoutElement);
-        return tween;
+        return Tween.To(
+            () => layoutElement.flexibleHeight, 
+            x => layoutElement.flexibleHeight = x, 
+            () => to, 
+            duration,
+            () => layoutElement != null
+            );
     }
 
-    public static Tween TweenFlexibleSize(this LayoutElement layoutElement, Vector2 to, float duration)
+    public static ITween TweenFlexibleSize(this LayoutElement layoutElement, Vector2 to, float duration)
     {
-        Tween widthTween = TweenFlexibleWidth(layoutElement, to.x, duration);
-        Tween heightTween = TweenFlexibleHeight(layoutElement, to.y, duration);
+        ITween widthTween = TweenFlexibleWidth(layoutElement, to.x, duration);
+        ITween heightTween = TweenFlexibleHeight(layoutElement, to.y, duration);
 
         GroupTween groupTween = new GroupTween();
         groupTween.Add(widthTween);
@@ -30,24 +38,32 @@ public static class JuceTweenLayoutElementExtensions
         return groupTween;
     }
 
-    public static Tween TweenMinWidth(this LayoutElement layoutElement, float to, float duration)
+    public static ITween TweenMinWidth(this LayoutElement layoutElement, float to, float duration)
     {
-        Tween tween = Tween.To(() => layoutElement.minWidth, x => layoutElement.minWidth = x, () => to, duration);
-        tween.SetTarget(layoutElement);
-        return tween;
+        return Tween.To(
+            () => layoutElement.minWidth, 
+            x => layoutElement.minWidth = x, 
+            () => to, 
+            duration,
+            () => layoutElement != null
+            );
     }
 
-    public static Tween TweenMinHeight(this LayoutElement layoutElement, float to, float duration)
+    public static ITween TweenMinHeight(this LayoutElement layoutElement, float to, float duration)
     {
-        Tween tween = Tween.To(() => layoutElement.minHeight, x => layoutElement.minHeight = x, () => to, duration);
-        tween.SetTarget(layoutElement);
-        return tween;
+        return Tween.To(
+            () => layoutElement.minHeight, 
+            x => layoutElement.minHeight = x, 
+            () => to, 
+            duration,
+            () => layoutElement != null
+            );
     }
 
-    public static Tween TweenMinSize(this LayoutElement layoutElement, Vector2 to, float duration)
+    public static ITween TweenMinSize(this LayoutElement layoutElement, Vector2 to, float duration)
     {
-        Tween widthTween = TweenMinWidth(layoutElement, to.x, duration);
-        Tween heightTween = TweenMinHeight(layoutElement, to.y, duration);
+        ITween widthTween = TweenMinWidth(layoutElement, to.x, duration);
+        ITween heightTween = TweenMinHeight(layoutElement, to.y, duration);
 
         GroupTween groupTween = new GroupTween();
         groupTween.Add(widthTween);
@@ -56,24 +72,32 @@ public static class JuceTweenLayoutElementExtensions
         return groupTween;
     }
 
-    public static Tween TweenPreferedWidth(this LayoutElement layoutElement, float to, float duration)
+    public static ITween TweenPreferedWidth(this LayoutElement layoutElement, float to, float duration)
     {
-        Tween tween = Tween.To(() => layoutElement.preferredWidth, x => layoutElement.preferredWidth = x, () => to, duration);
-        tween.SetTarget(layoutElement);
-        return tween;
+        return Tween.To(
+            () => layoutElement.preferredWidth, 
+            x => layoutElement.preferredWidth = x, 
+            () => to, 
+            duration,
+            () => layoutElement != null
+            );
     }
 
-    public static Tween TweenPreferedHeight(this LayoutElement layoutElement, float to, float duration)
+    public static ITween TweenPreferedHeight(this LayoutElement layoutElement, float to, float duration)
     {
-        Tween tween = Tween.To(() => layoutElement.preferredHeight, x => layoutElement.preferredHeight = x, () => to, duration);
-        tween.SetTarget(layoutElement);
-        return tween;
+        return Tween.To(
+            () => layoutElement.preferredHeight, 
+            x => layoutElement.preferredHeight = x, 
+            () => to, 
+            duration,
+            () => layoutElement != null
+            );
     }
 
-    public static Tween TweenPreferedSize(this LayoutElement layoutElement, Vector2 to, float duration)
+    public static ITween TweenPreferedSize(this LayoutElement layoutElement, Vector2 to, float duration)
     {
-        Tween widthTween = TweenPreferedWidth(layoutElement, to.x, duration);
-        Tween heightTween = TweenPreferedHeight(layoutElement, to.y, duration);
+        ITween widthTween = TweenPreferedWidth(layoutElement, to.x, duration);
+        ITween heightTween = TweenPreferedHeight(layoutElement, to.y, duration);
 
         GroupTween groupTween = new GroupTween();
         groupTween.Add(widthTween);

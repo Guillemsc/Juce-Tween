@@ -3,28 +3,30 @@ using System;
 
 namespace Juce.Tween
 {
-    public class CallbackTween : Tween
+    public class ResetableCallbackTween : Tween
     {
         private readonly Action action;
+        private readonly Action resetAction;
 
-        public CallbackTween(Action action)
+        public ResetableCallbackTween(Action action, Action resetAction)
         {
             this.action = action;
+            this.resetAction = resetAction;
         }
 
         public override void OnTimeScaleChanges(float timeScale)
         {
- 
+
         }
 
         public override void OnEaseDelegateChanges(EaseDelegate easeFunction)
         {
-  
+
         }
 
         public override void OnLoopFinished(LoopResetMode loopResetMode)
         {
-
+            resetAction?.Invoke();
         }
 
         public override void Start()
@@ -43,7 +45,7 @@ namespace Juce.Tween
 
         public override void Update()
         {
-  
+
         }
 
         public override void Complete()
@@ -65,6 +67,8 @@ namespace Juce.Tween
 
         public override void Reset()
         {
+            resetAction?.Invoke();
+
             MarkReset();
         }
     }

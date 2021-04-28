@@ -1,57 +1,60 @@
-﻿using UnityEngine;
+﻿using Juce.Tween.Easing;
+using Juce.Tween.Interpolators;
+using UnityEngine;
 
-namespace Juce.Tween
+namespace Juce.Tween.Tweeners
 {
-    public class Tweener<T> : ITweener
+    public abstract class Tweener<T> : ITweener
     {
-        private T initialValue;
-        private T finalValue;
-
-        private bool firstTime;
-        private T firstTimeInitialValue;
-        private T firstTimeFinalValue;
+        public delegate void Setter(T value);
+        public delegate T Getter();
+        public delegate bool Validation();
 
         private readonly IInterpolator<T> interpolator;
 
         private readonly Getter currValueGetter;
         private readonly Setter setter;
         private readonly Getter finalValueGetter;
+        private readonly Validation validation;
+
+        private bool firstTime;
+        private T firstTimeInitialValue;
+        private T firstTimeFinalValue;
+
+        private T initialValue;
+        private T finalValue;
 
         private EaseDelegate easeFunction;
         private float elapsedTime;
 
-        public delegate void Setter(T value);
-
-        public delegate T Getter();
+        public bool IsPlaying { get; protected set; }
 
         public float Duration { get; }
         public bool UseGeneralTimeScale { get; set; }
         public float TimeScale { get; set; }
 
-        public bool IsPlaying { get; protected set; }
-        public bool IsCompleted { get; protected set; }
-        public float Progress { get => elapsedTime / Duration; }
+        public float Progress => GetProgress();
 
-        internal Tweener(Getter currValueGetter, Setter setter, Getter finalValueGetter, float duration, IInterpolator<T> interpolator)
+        public Tweener(
+            Getter currValueGetter, 
+            Setter setter, 
+            Getter finalValueGetter, 
+            float duration, 
+            IInterpolator<T> interpolator,
+            Validation validation
+            )
         {
             this.currValueGetter = currValueGetter;
             this.setter = setter;
             this.finalValueGetter = finalValueGetter;
-            Duration = duration;
+            Duration = Mathf.Max(duration, 0.0f);
             this.interpolator = interpolator;
+            this.validation = validation;
 
             firstTime = true;
 
             UseGeneralTimeScale = true;
             TimeScale = 1.0f;
-        }
-
-        public void Init()
-        {
-            IsPlaying = false;
-            IsCompleted = false;
-
-            elapsedTime = 0.0f;
         }
 
         public void Start()
@@ -62,12 +65,20 @@ namespace Juce.Tween
             }
 
             IsPlaying = true;
-            IsCompleted = false;
 
             elapsedTime = 0.0f;
 
-            this.initialValue = currValueGetter();
-            this.finalValue = finalValueGetter();
+            bool valid = validation();
+
+            if(!valid)
+            {
+                Kill();
+
+                return;
+            }
+
+            initialValue = currValueGetter();
+            finalValue = finalValueGetter();
 
             if (firstTime)
             {
@@ -76,39 +87,42 @@ namespace Juce.Tween
                 firstTimeInitialValue = initialValue;
                 firstTimeFinalValue = finalValue;
             }
+
+            CompleteIfInstant();
         }
 
-        public void Reset(ResetMode mode)
+        public void Reset(LoopResetMode mode)
         {
             if (firstTime)
             {
                 return;
             }
 
+            bool valid = validation();
+
+            if (!valid)
+            {
+                Kill();
+
+                return;
+            }
+
             switch (mode)
             {
-                case ResetMode.RestartValues:
+                case LoopResetMode.InitialValues:
                     {
-                        if (Duration > 0)
-                        {
-                            setter(firstTimeInitialValue);
-                            finalValue = firstTimeFinalValue;
-                        }
-                        else
-                        {
-                            setter(firstTimeFinalValue);
-                            finalValue = firstTimeFinalValue;
-                        }
+                        setter(firstTimeInitialValue);
+                        finalValue = firstTimeFinalValue;
                     }
                     break;
 
-                case ResetMode.CurrentValues:
+                case LoopResetMode.CurrentValues:
                     {
                         finalValue = firstTimeFinalValue;
                     }
                     break;
 
-                case ResetMode.IncrementalValues:
+                case LoopResetMode.IncrementalValues:
                     {
                         T difference = interpolator.Subtract(firstTimeInitialValue, firstTimeFinalValue);
                         finalValue = interpolator.Add(currValueGetter(), difference);
@@ -121,6 +135,15 @@ namespace Juce.Tween
         {
             if (!IsPlaying)
             {
+                return;
+            }
+
+            bool valid = validation();
+
+            if (!valid)
+            {
+                Kill();
+
                 return;
             }
 
@@ -151,12 +174,41 @@ namespace Juce.Tween
             setter(newValue);
 
             IsPlaying = false;
-            IsCompleted = true;
+        }
+
+        public void Kill()
+        {
+            IsPlaying = false;
         }
 
         public void SetEase(EaseDelegate easeFunction)
         {
             this.easeFunction = easeFunction;
+        }
+
+        private void CompleteIfInstant()
+        {
+            if (!IsPlaying)
+            {
+                return;
+            }
+
+            bool isInstant = Duration == 0.0f;
+
+            if (isInstant)
+            {
+                Complete();
+            }
+        }
+
+        private float GetProgress()
+        {
+            if(Duration >= 0.0f)
+            {
+                return 1.0f;
+            }
+
+            return elapsedTime / Duration; 
         }
     }
 }

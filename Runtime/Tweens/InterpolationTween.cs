@@ -1,154 +1,121 @@
-﻿using System;
+﻿using Juce.Tween.Easing;
+using Juce.Tween.Tweeners;
+using System;
 using System.Collections.Generic;
 
 namespace Juce.Tween
 {
-    internal class InterpolationTween : Tween
+    public class InterpolationTween : Tween
     {
-        private readonly List<ITweener> allTweeners = new List<ITweener>();
+        private readonly List<ITweener> tweeners = new List<ITweener>();
+        private readonly List<ITweener> playingTweeners = new List<ITweener>();
 
-        private int tweenersLeftToFinish;
-
-        protected override void SetUseGeneralTimeScaleInternal(bool set)
+        public override void OnEaseDelegateChanges(EaseDelegate easeFunction)
         {
-            for (int i = 0; i < allTweeners.Count; ++i)
+            foreach (ITweener tweener in tweeners)
             {
-                allTweeners[i].UseGeneralTimeScale = set;
+                tweener.SetEase(easeFunction);
             }
         }
 
-        protected override void SetTimeScaleInternal(float timeScale)
+        public override void OnTimeScaleChanges(float timeScale)
         {
-            for (int i = 0; i < allTweeners.Count; ++i)
+            foreach(ITweener tweener in tweeners)
             {
-                allTweeners[i].TimeScale = timeScale;
+                tweener.TimeScale = timeScale;
             }
         }
 
-        protected override void SetEaseInternal(EaseDelegate easeFunction)
+        public override void OnLoopFinished(LoopResetMode loopResetMode)
         {
-            for (int i = 0; i < allTweeners.Count; ++i)
+            for (int i = tweeners.Count - 1; i >= 0; --i)
             {
-                allTweeners[i].SetEase(easeFunction);
+                ITweener tweener = tweeners[i];
+
+                tweener.Reset(loopResetMode);
             }
+
+            StartTweeners();
         }
 
-        protected override void ActivateInternal()
+        public override void Start()
         {
-            for (int i = 0; i < allTweeners.Count; ++i)
+            if (IsPlaying)
             {
-                allTweeners[i].Init();
+                Kill();
             }
+
+            MarkStart();
+
+            StartTweeners();
         }
 
-        protected override void StartInternal()
+        public override void Update()
         {
-            tweenersLeftToFinish = allTweeners.Count;
-
-            for (int i = 0; i < allTweeners.Count; ++i)
+            for(int i = playingTweeners.Count - 1; i >= 0; --i)
             {
-                allTweeners[i].SetEase(EaseFunction);
-            }
-        }
+                ITweener tweener = playingTweeners[i];
 
-        protected override void CompleteInternal()
-        {
-            for (int i = 0; i < allTweeners.Count; ++i)
-            {
-                ITweener currTweener = allTweeners[i];
+                tweener.Update();
 
-                if (!currTweener.IsPlaying)
+                if (!tweener.IsPlaying)
                 {
-                    currTweener.Start();
-                }
-
-                if (currTweener.IsPlaying)
-                {
-                    currTweener.Complete();
+                    playingTweeners.RemoveAt(i);
                 }
             }
 
-            tweenersLeftToFinish = 0;
-        }
-
-        protected override void KillInternal()
-        {
-            tweenersLeftToFinish = 0;
-        }
-
-        protected override void ResetInternal(ResetMode resetMode)
-        {
-            for (int i = 0; i < allTweeners.Count; ++i)
+            if(playingTweeners.Count == 0)
             {
-                ITweener currTweener = allTweeners[i];
-
-                currTweener.Reset(resetMode);
-
-                currTweener.Init();
+                MarkFinish(canLoop: true);
             }
         }
 
-        protected override void UpdateInternal()
+        public override void Complete()
         {
-            tweenersLeftToFinish = 0;
-
-            for (int i = 0; i < allTweeners.Count; ++i)
+            if (!IsPlaying)
             {
-                ITweener currTweener = allTweeners[i];
-
-                currTweener.TimeScale = TimeScale;
-
-                if (!currTweener.IsPlaying)
-                {
-                    currTweener.Start();
-                }
-
-                currTweener.Update();
-
-                if (!currTweener.IsCompleted)
-                {
-                    ++tweenersLeftToFinish;
-                }
+                Start();
             }
 
-            if (tweenersLeftToFinish == 0)
+            foreach(ITweener tweener in playingTweeners)
             {
-                MarkAsFinished();
+                tweener.Complete();
             }
+
+            playingTweeners.Clear();
+
+            MarkFinish(canLoop: false);
         }
 
-        protected override float GetDurationInternal()
+        public override void Kill()
         {
-            float duration = 0.0f;
-
-            for (int i = 0; i < allTweeners.Count; ++i)
+            if (!IsPlaying)
             {
-                ITweener currTweener = allTweeners[i];
-
-                if (currTweener.Duration > duration)
-                {
-                    duration = currTweener.Duration;
-                }
+                return;
             }
 
-            return duration;
+            foreach (ITweener tweener in playingTweeners)
+            {
+                tweener.Kill();
+            }
+
+            playingTweeners.Clear();
+
+            MarkKilled();
         }
 
-        protected override float GetProgressInternal()
+        public override void Reset()
         {
-            float progress = float.MaxValue;
+            Kill();
 
-            for (int i = 0; i < allTweeners.Count; ++i)
+            for (int i = tweeners.Count - 1; i >= 0; --i)
             {
-                ITweener currTweener = allTweeners[i];
+                ITweener tweener = tweeners[i];
 
-                if (currTweener.Progress < progress)
-                {
-                    progress = currTweener.Progress;
-                }
+                tweener.Reset(LoopResetMode.InitialValues);
             }
 
-            return progress;
+            MarkReset();
         }
 
         public void Add(ITweener tweener)
@@ -164,13 +131,40 @@ namespace Juce.Tween
                     $"but it was already playing");
             }
 
-            if (allTweeners.Contains(tweener))
+            if (tweeners.Contains(tweener))
             {
                 throw new ArgumentNullException($"Tried to {nameof(Add)} a {nameof(ITweener)} on {nameof(InterpolationTween)} " +
                     $"but it was already added");
             }
 
-            allTweeners.Add(tweener);
+            tweeners.Add(tweener);
+        }
+
+        private void StartTweeners()
+        {
+            playingTweeners.Clear();
+            playingTweeners.AddRange(tweeners);
+
+            for (int i = playingTweeners.Count - 1; i >= 0; --i)
+            {
+                ITweener tweener = playingTweeners[i];
+
+                // Set target
+
+                tweener.SetEase(EaseFunction);
+
+                tweener.Start();
+
+                if (!tweener.IsPlaying)
+                {
+                    playingTweeners.RemoveAt(i);
+                }
+            }
+
+            if (playingTweeners.Count == 0)
+            {
+                MarkFinish(canLoop: true);
+            }
         }
     }
 }

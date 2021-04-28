@@ -1,49 +1,113 @@
-﻿using System;
+﻿using Juce.Tween.Easing;
+using System;
 using UnityEngine;
 
 namespace Juce.Tween
 {
-    public abstract partial class Tween
+    public abstract partial class Tween : ITween
     {
-        internal bool IsNested { get; set; }
+        private int loopsLeft;
 
-        internal EaseDelegate EaseFunction { get; private set; }
+        protected EaseDelegate EaseFunction { get; private set; }
+        public float TimeScale { get; private set; }
 
-        internal float TimeScale { get; private set; }
+        public int Loops { get; private set; }
+        public LoopResetMode LoopResetMode { get; private set; }
 
-        internal bool HasTarget { get; private set; }
-        internal object Target { get; private set; }
+        public bool IsNested { get; set; }
 
-        internal int Loops { get; private set; }
-        internal int LoopsLeft { get; set; }
-        internal ResetMode LoopsResetMode { get; set; }
+        public bool IsPlaying { get; protected set; }
+        public bool IsCompleted { get; protected set; }
 
-        internal bool IsActive { get; set; }
-        internal bool ForcedFinish { get; set; }
+        public bool IsAlive { get; set; }
 
-        public bool IsPlaying { get; internal set; }
-        public bool IsCompleted { get; internal set; }
-        public bool IsKilled { get; set; }
-        public bool IsCompletedOrKilled => IsCompleted || IsKilled;
+        public event Action<float> OnTimeScaleChanged;
+        public event Action OnStart;
+        public event Action OnLoop;
+        public event Action OnReset;
+        public event Action OnComplete;
+        public event Action OnKill;
+        public event Action OnCompleteOrKill;
 
-        public event Action<float> onTimeScaleChange;
-
-        public event Action onStart;
-
-        public event Action onUpdate;
-
-        public event Action onComplete;
-
-        public event Action onKill;
-
-        public event Action onCompleteOrKill;
-
-        public event Action onLoop;
-
-        internal Tween()
+        public Tween()
         {
-            SetTimeScale(1.0f);
             SetEase(Ease.Linear);
+            SetTimeScale(1.0f);
+        }
+
+        protected void MarkStart()
+        {
+            IsPlaying = true;
+            IsCompleted = false;
+
+            loopsLeft = Loops;
+
+            OnStart?.Invoke();
+        }
+
+        protected void MarkFinish(bool canLoop)
+        {
+            if(!IsPlaying)
+            {
+                return;
+            }
+
+            bool needsToLoop = loopsLeft > 0;
+
+            if (needsToLoop && canLoop)
+            {
+                --loopsLeft;
+
+                OnLoopFinished(LoopResetMode);
+
+                OnLoop?.Invoke();
+
+                return;
+            }
+
+            IsPlaying = false;
+            IsCompleted = true;
+
+            OnComplete?.Invoke();
+            OnCompleteOrKill?.Invoke();
+        }
+
+        protected void MarkKilled()
+        {
+            if (!IsPlaying)
+            {
+                return;
+            }
+
+            IsPlaying = false;
+            IsCompleted = true;
+
+            OnKill?.Invoke();
+            OnCompleteOrKill?.Invoke();
+        }
+
+        protected void MarkReset()
+        {
+            IsPlaying = false;
+            IsCompleted = false;
+
+            OnReset?.Invoke();
+        }
+
+        public void SetTimeScale(float timeScale)
+        {
+            TimeScale = timeScale;
+
+            OnTimeScaleChanges(timeScale);
+
+            OnTimeScaleChanged?.Invoke(timeScale);
+        }
+
+        public void SetEase(EaseDelegate easeFunction)
+        {
+            EaseFunction = easeFunction;
+
+            OnEaseDelegateChanges(EaseFunction);
         }
 
         public void SetEase(Ease ease)
@@ -62,418 +126,32 @@ namespace Juce.Tween
             SetEase(AnimationCurveEaser.GetEaseDelegate(animationCurve));
         }
 
-        internal void SetEase(EaseDelegate easeFunction)
+        public void SetLoops(int loops, LoopResetMode resetMode)
         {
-            if (easeFunction == null)
-            {
-                throw new ArgumentNullException($"Tried to {nameof(SetEase)} " +
-                  $"with a null {nameof(EaseDelegate)} on {nameof(Tween)}");
-            }
-
-            EaseFunction = easeFunction;
-
-            SetEaseInternal(easeFunction);
+            Loops = Math.Max(loops, 0);
+            LoopResetMode = resetMode;
         }
 
-        public void SetUseGeneralTimeScale(bool set)
+        public void Replay()
         {
-            SetUseGeneralTimeScaleInternal(set);
-        }
-
-        public void SetTimeScale(float set)
-        {
-            TimeScale = set;
-
-            SetTimeScaleInternal(set);
-
-            onTimeScaleChange?.Invoke(set);
-        }
-
-        public void SetTarget(object target)
-        {
-            Target = target;
-
-            if (Target != null)
-            {
-                HasTarget = true;
-            }
-            else
-            {
-                HasTarget = false;
-            }
-        }
-
-        public bool HasValidTarget()
-        {
-            if (!HasTarget)
-            {
-                return true;
-            }
-
-            if (Target is UnityEngine.Object)
-            {
-                if (((UnityEngine.Object)Target) == null)
-                {
-                    return false;
-                }
-            }
-            else if (Target == null)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public void SetLoops(int loops, ResetMode resetMode)
-        {
-            if (IsActive)
-            {
-                return;
-            }
-
-            Loops = loops;
-            LoopsResetMode = resetMode;
-        }
-
-        public void Play(bool syncOnPlay = true)
-        {
-            if (IsActive)
-            {
-                return;
-            }
-
-            if (IsNested)
-            {
-                return;
-            }
-
-            Activate();
-
-            JuceTween.Add(this, syncOnPlay);
-        }
-
-        public void Restart()
-        {
-            Kill();
-
-            Reset(ResetMode.RestartValues);
-
+            Reset();
             Play();
         }
 
-        internal void Activate(bool resetLoops = true)
+        public void Play()
         {
-            if (IsActive)
-            {
-                return;
-            }
-
-            if (resetLoops)
-            {
-                LoopsLeft = Loops;
-            }
-
-            ForcedFinish = false;
-
-            IsActive = true;
-            IsPlaying = false;
-            IsCompleted = false;
-            IsKilled = false;
-
-            ActivateInternal();
+            JuceTween.Add(this);
         }
 
-        internal void Deactivate()
-        {
-            if (!IsActive)
-            {
-                return;
-            }
-
-            IsActive = false;
-        }
-
-        internal void Start()
-        {
-            if (!IsActive)
-            {
-                return;
-            }
-
-            if (IsPlaying)
-            {
-                return;
-            }
-
-            ForcedFinish = false;
-
-            IsPlaying = true;
-            IsCompleted = false;
-            IsKilled = false;
-
-            StartInternal();
-
-            onStart?.Invoke();
-        }
-
-        public void Reset(ResetMode resetMode)
-        {
-            if (!HasValidTarget())
-            {
-                return;
-            }
-
-            ResetInternal(resetMode);
-
-            onLoop?.Invoke();
-        }
-
-        public void Complete()
-        {
-            if (!IsActive)
-            {
-                return;
-            }
-
-            if (!IsPlaying)
-            {
-                return;
-            }
-
-            if (!HasValidTarget())
-            {
-                return;
-            }
-
-            Deactivate();
-
-            LoopsLeft = 0;
-
-            ForcedFinish = true;
-
-            IsPlaying = false;
-            IsCompleted = true;
-            IsKilled = false;
-
-            CompleteInternal();
-
-            onComplete?.Invoke();
-            onCompleteOrKill?.Invoke();
-        }
-
-        public void Kill()
-        {
-            if (!IsActive)
-            {
-                return;
-            }
-
-            if (!IsPlaying)
-            {
-                return;
-            }
-
-            if (!HasValidTarget())
-            {
-                return;
-            }
-
-            Deactivate();
-
-            LoopsLeft = 0;
-
-            ForcedFinish = true;
-
-            IsPlaying = false;
-            IsCompleted = false;
-            IsKilled = true;
-
-            KillInternal();
-
-            onKill?.Invoke();
-            onCompleteOrKill?.Invoke();
-        }
-
-        protected void MarkAsFinished()
-        {
-            if (!IsActive)
-            {
-                return;
-            }
-
-            if (!IsPlaying)
-            {
-                return;
-            }
-
-            if (IsCompletedOrKilled)
-            {
-                return;
-            }
-
-            Deactivate();
-
-            if (LoopsLeft > 0)
-            {
-                return;
-            }
-
-            ForcedFinish = false;
-
-            IsPlaying = false;
-            IsCompleted = true;
-
-            onComplete?.Invoke();
-            onCompleteOrKill?.Invoke();
-        }
-
-        internal void Update()
-        {
-            if (!IsPlaying)
-            {
-                return;
-            }
-
-            UpdateInternal();
-
-            onUpdate?.Invoke();
-        }
-
-        public float GetDuration()
-        {
-            return GetDurationInternal();
-        }
-
-        public float GetProgress()
-        {
-            if (!IsPlaying)
-            {
-                return 0.0f;
-            }
-
-            return GetProgressInternal();
-        }
-
-        public void OnTimeScaleChange(Action<float> action)
-        {
-            if (action == null)
-            {
-                return;
-            }
-
-            onTimeScaleChange += action;
-        }
-
-        public void OnStart(Action action)
-        {
-            if (action == null)
-            {
-                return;
-            }
-
-            onStart = action;
-        }
-
-        public void OnUpdate(Action action)
-        {
-            if (action == null)
-            {
-                return;
-            }
-
-            onUpdate = action;
-        }
-
-        public void OnComplete(Action action)
-        {
-            if (action == null)
-            {
-                return;
-            }
-
-            onComplete = action;
-        }
-
-        public void OnKill(Action action)
-        {
-            if (action == null)
-            {
-                return;
-            }
-
-            onKill = action;
-        }
-
-        public void OnCompleteOrKill(Action action)
-        {
-            if (action == null)
-            {
-                return;
-            }
-
-            onCompleteOrKill = action;
-        }
-
-        public void OnLoop(Action action)
-        {
-            if (action == null)
-            {
-                return;
-            }
-
-            onLoop = action;
-        }
-
-        protected virtual void SetUseGeneralTimeScaleInternal(bool set)
-        {
-        }
-
-        protected virtual void SetTimeScaleInternal(float timeScale)
-        {
-        }
-
-        protected virtual void SetEaseInternal(EaseDelegate easeFunction)
-        {
-        }
-
-        protected virtual void ActivateInternal()
-        {
-        }
-
-        protected virtual void StartInternal()
-        {
-        }
-
-        protected virtual void ResetInternal(ResetMode resetMode)
-        {
-        }
-
-        protected virtual void CompleteInternal()
-        {
-        }
-
-        protected virtual void KillInternal()
-        {
-        }
-
-        protected virtual void UpdateInternal()
-        {
-        }
-
-        protected virtual float GetDurationInternal()
-        {
-            return 0.0f;
-        }
-
-        protected virtual float GetProgressInternal()
-        {
-            return 1.0f;
-        }
-
-        public virtual int GetNestedTweenChildsCount()
-        {
-            return 0;
-        }
+        public abstract void OnEaseDelegateChanges(EaseDelegate easeFunction);
+        public abstract void OnTimeScaleChanges(float timeScale);
+        public abstract void OnLoopFinished(LoopResetMode loopResetMode);
+
+        public abstract void Start();
+        public abstract void Update();
+
+        public abstract void Complete();
+        public abstract void Kill();
+        public abstract void Reset();
     }
 }

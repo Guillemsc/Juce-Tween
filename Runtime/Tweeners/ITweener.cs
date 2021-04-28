@@ -1,24 +1,22 @@
-﻿namespace Juce.Tween
+﻿using Juce.Tween.Easing;
+
+namespace Juce.Tween.Tweeners
 {
-    internal interface ITweener
+    public interface ITweener
     {
         float Duration { get; }
         bool UseGeneralTimeScale { get; set; }
         float TimeScale { get; set; }
-        bool IsPlaying { get; }
-        bool IsCompleted { get; }
         float Progress { get; }
+
+        bool IsPlaying { get; }
 
         void SetEase(EaseDelegate easeFunction);
 
-        void Init();
-
+        void Reset(LoopResetMode mode);
         void Start();
-
-        void Reset(ResetMode mode);
-
         void Update();
-
         void Complete();
+        void Kill();
     }
 }

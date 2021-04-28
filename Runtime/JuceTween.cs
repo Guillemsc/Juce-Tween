@@ -17,6 +17,11 @@ namespace Juce.Tween
             set { Instance.timeScale = value; }
         }
 
+        public static ISequenceTween Sequence()
+        {
+            return new SequenceTween();
+        }
+
         private void Awake()
         {
             Init();
@@ -38,33 +43,64 @@ namespace Juce.Tween
 
             for (int i = 0; i < aliveTweens.Count; ++i)
             {
-                aliveTweensCount += aliveTweens[i].GetNestedTweenChildsCount() + 1;
+                //aliveTweensCount += aliveTweens[i].GetNestedTweenChildsCount() + 1;
             }
 
             return aliveTweensCount;
         }
 
-        internal static void Add(Tween tween, bool syncNow)
+        internal static void Add(Tween tween)
         {
             if (tween == null)
             {
                 throw new ArgumentNullException($"Tried to play a null {nameof(Tween)} on {nameof(JuceTween)} instance");
             }
 
-            if (!Instance.aliveTweens.Contains(tween))
+            if(tween.IsAlive)
             {
-                Instance.aliveTweens.Add(tween);
+                Instance.TryStartTween(tween);
+
+                return;
             }
 
-            if (syncNow)
+            tween.IsAlive = true;
+
+            Instance.aliveTweens.Add(tween);
+
+            Instance.TryStartTween(tween);
+        }
+
+        private void TryStartTween(Tween tween)
+        {
+            if (!tween.IsPlaying)
             {
-                Instance.UpdateTweens();
+                tween.Start();
             }
         }
 
         private void UpdateTweens()
         {
-            TweenUtils.UpdateSimultaneous(aliveTweens, tweensToRemove);
+            foreach(Tween tween in aliveTweens)
+            {
+                if(tween.IsPlaying && !tween.IsCompleted)
+                {
+                    tween.Update();
+                }
+
+                if(!tween.IsPlaying || tween.IsCompleted)
+                {
+                    tweensToRemove.Add(tween);
+                }
+            }
+
+            foreach(Tween tween in tweensToRemove)
+            {
+                tween.IsAlive = false;
+
+                aliveTweens.Remove(tween);
+            }
+
+            tweensToRemove.Clear();
         }
     }
 }
