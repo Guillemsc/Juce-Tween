@@ -23,6 +23,8 @@ namespace Juce.Tween
             {
                 tween.OnEaseDelegateChanges(easeFunction);
             }
+
+            EaseFunction = easeFunction;
         }
 
         public override void OnLoopFinished(LoopResetMode loopResetMode)
@@ -35,6 +37,61 @@ namespace Juce.Tween
             }
 
             StartTweens();
+
+            MarkLoop();
+        }
+
+        public override float OnGetDuration()
+        {
+            float totalDuration = 0.0f;
+
+            foreach (Tween tween in tweens)
+            {
+                totalDuration += tween.GetDuration();
+            }
+
+            return totalDuration;
+        }
+
+        public override float OnGetElapsed()
+        {
+            float totalDuration = 0.0f;
+
+            foreach (Tween tween in tweens)
+            {
+                totalDuration += tween.GetElapsed();
+            }
+
+            return totalDuration;
+        }
+
+        public override int OnGetTweensCount()
+        {
+            int totalTweens = 1;
+
+            foreach (Tween tween in tweens)
+            {
+                totalTweens += tween.GetTweensCount();
+            }
+
+            return totalTweens;
+        }
+
+        public override int OnGetPlayingTweensCount()
+        {
+            if(!IsPlaying)
+            {
+                return 0;
+            }
+
+            int totalTweens = 1;
+
+            foreach (Tween tween in tweens)
+            {
+                totalTweens += tween.OnGetPlayingTweensCount();
+            }
+
+            return totalTweens;
         }
 
         public override void Start()
@@ -65,7 +122,7 @@ namespace Juce.Tween
 
             if (playingTweens.Count == 0)
             {
-                MarkFinish(canLoop: true);
+                MarkCompleted(canLoop: true);
             }
         }
 
@@ -83,7 +140,7 @@ namespace Juce.Tween
 
             playingTweens.Clear();
 
-            MarkFinish(canLoop: false);
+            MarkCompleted(canLoop: false);
         }
 
         public override void Kill()
@@ -155,8 +212,6 @@ namespace Juce.Tween
             {
                 Tween tween = playingTweens[i];
 
-                tween.SetEase(EaseFunction);
-
                 tween.Start();
 
                 if (!tween.IsPlaying)
@@ -167,7 +222,7 @@ namespace Juce.Tween
 
             if (playingTweens.Count == 0)
             {
-                MarkFinish(canLoop: true);
+                MarkCompleted(canLoop: true);
             }
         }
     }

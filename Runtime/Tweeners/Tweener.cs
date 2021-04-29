@@ -25,15 +25,14 @@ namespace Juce.Tween.Tweeners
         private T finalValue;
 
         private EaseDelegate easeFunction;
-        private float elapsedTime;
 
         public bool IsPlaying { get; protected set; }
 
         public float Duration { get; }
+        public float Elapsed { get; private set; }
+
         public bool UseGeneralTimeScale { get; set; }
         public float TimeScale { get; set; }
-
-        public float Progress => GetProgress();
 
         public Tweener(
             Getter currValueGetter, 
@@ -66,7 +65,7 @@ namespace Juce.Tween.Tweeners
 
             IsPlaying = true;
 
-            elapsedTime = 0.0f;
+            Elapsed = 0.0f;
 
             bool valid = validation();
 
@@ -106,6 +105,8 @@ namespace Juce.Tween.Tweeners
 
                 return;
             }
+
+            Elapsed = 0.0f;
 
             switch (mode)
             {
@@ -151,11 +152,11 @@ namespace Juce.Tween.Tweeners
 
             float dt = Time.unscaledDeltaTime * generalTimeScale * TimeScale;
 
-            elapsedTime += dt;
+            Elapsed += dt;
 
-            if (elapsedTime < Duration)
+            if (Elapsed < Duration)
             {
-                float timeNormalized = elapsedTime / Duration;
+                float timeNormalized = Elapsed / Duration;
 
                 T newValue = interpolator.Evaluate(initialValue, finalValue, timeNormalized, easeFunction);
 
@@ -199,16 +200,6 @@ namespace Juce.Tween.Tweeners
             {
                 Complete();
             }
-        }
-
-        private float GetProgress()
-        {
-            if(Duration >= 0.0f)
-            {
-                return 1.0f;
-            }
-
-            return elapsedTime / Duration; 
         }
     }
 }

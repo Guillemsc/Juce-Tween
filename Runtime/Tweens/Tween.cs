@@ -8,7 +8,7 @@ namespace Juce.Tween
     {
         private int loopsLeft;
 
-        protected EaseDelegate EaseFunction { get; private set; }
+        protected EaseDelegate EaseFunction { get; set; }
         public float TimeScale { get; private set; }
 
         public int Loops { get; private set; }
@@ -45,7 +45,7 @@ namespace Juce.Tween
             OnStart?.Invoke();
         }
 
-        protected void MarkFinish(bool canLoop)
+        protected void MarkCompleted(bool canLoop)
         {
             if(!IsPlaying)
             {
@@ -86,12 +86,60 @@ namespace Juce.Tween
             OnCompleteOrKill?.Invoke();
         }
 
+        protected void MarkLoop()
+        {
+            IsCompleted = false;
+        }
+
         protected void MarkReset()
         {
             IsPlaying = false;
             IsCompleted = false;
 
             OnReset?.Invoke();
+        }
+
+        public float GetDuration()
+        {
+            return OnGetDuration();
+        }
+
+        public float GetElapsed()
+        {
+            if(!IsPlaying && !IsCompleted)
+            {
+                return 0.0f;
+            }
+
+            if(!IsPlaying && IsCompleted)
+            {
+                return GetDuration();
+            }
+
+            return OnGetElapsed();
+        }
+
+        public float GetNormalizedProgress()
+        {
+            float duration = GetDuration();
+            float elapsed = GetElapsed();
+
+            if(duration <= 0)
+            {
+                return 0.0f;
+            }
+
+            return (1.0f / duration) * elapsed;
+        }
+
+        public int GetTweensCount()
+        {
+            return OnGetTweensCount();
+        }
+
+        public int GetPlayingTweensCount()
+        {
+            return OnGetPlayingTweensCount();
         }
 
         public void SetTimeScale(float timeScale)
@@ -146,6 +194,11 @@ namespace Juce.Tween
         public abstract void OnEaseDelegateChanges(EaseDelegate easeFunction);
         public abstract void OnTimeScaleChanges(float timeScale);
         public abstract void OnLoopFinished(LoopResetMode loopResetMode);
+
+        public abstract float OnGetDuration();
+        public abstract float OnGetElapsed();
+        public abstract int OnGetTweensCount();
+        public abstract int OnGetPlayingTweensCount();
 
         public abstract void Start();
         public abstract void Update();

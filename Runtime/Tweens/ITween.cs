@@ -20,12 +20,17 @@ namespace Juce.Tween
         event Action OnKill;
         event Action OnCompleteOrKill;
 
+        float GetDuration();
+        float GetElapsed();
+        float GetNormalizedProgress();
+        int GetTweensCount();
+        int GetPlayingTweensCount();
+
         void SetTimeScale(float timeScale);
 
         void SetEase(Ease ease);
         void SetEase(AnimationCurve animationCurve);
         void SetLoops(int loops, LoopResetMode resetMode);
-
 
         void Complete();
         void Kill();

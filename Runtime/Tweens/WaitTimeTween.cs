@@ -6,7 +6,7 @@ namespace Juce.Tween
     public class WaitTimeTween : Tween
     {
         private readonly float duration;
-        private float elapsedTime;
+        private float elapsed;
 
         public WaitTimeTween(float duration)
         {
@@ -25,7 +25,29 @@ namespace Juce.Tween
 
         public override void OnLoopFinished(LoopResetMode loopResetMode)
         {
-            elapsedTime = 0.0f;
+            elapsed = 0.0f;
+
+            MarkLoop();
+        }
+
+        public override float OnGetDuration()
+        {
+            return duration;
+        }
+
+        public override float OnGetElapsed()
+        {
+            return elapsed;
+        }
+
+        public override int OnGetTweensCount()
+        {
+            return 1;
+        }
+
+        public override int OnGetPlayingTweensCount()
+        {
+            return IsPlaying ? 1 : 0;
         }
 
         public override void Start()
@@ -37,40 +59,40 @@ namespace Juce.Tween
 
             MarkStart();
 
-            elapsedTime = 0.0f;
+            elapsed = 0.0f;
         }
 
         public override void Update()
         {
             float dt = Time.unscaledDeltaTime * JuceTween.TimeScale * TimeScale;
 
-            elapsedTime += dt;
+            elapsed += dt;
 
-            if (elapsedTime >= duration)
+            if (elapsed >= duration)
             {
-                MarkFinish(canLoop: true);
+                MarkCompleted(canLoop: true);
             }
         }
 
         public override void Complete()
         {
-            elapsedTime = duration;
+            elapsed = duration;
 
-            MarkFinish(canLoop: false);
+            MarkCompleted(canLoop: false);
         }
 
         public override void Kill()
         {
-            elapsedTime = duration;
+            elapsed = duration;
 
-            MarkFinish(canLoop: false);
+            MarkCompleted(canLoop: false);
         }
 
         public override void Reset()
         {
             Kill();
 
-            elapsedTime = 0.0f;
+            elapsed = 0.0f;
 
             MarkReset();
         }

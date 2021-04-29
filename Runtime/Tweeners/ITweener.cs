@@ -5,9 +5,10 @@ namespace Juce.Tween.Tweeners
     public interface ITweener
     {
         float Duration { get; }
+        float Elapsed { get; }
+
         bool UseGeneralTimeScale { get; set; }
         float TimeScale { get; set; }
-        float Progress { get; }
 
         bool IsPlaying { get; }
 

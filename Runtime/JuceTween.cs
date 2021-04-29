@@ -1,6 +1,7 @@
 ﻿using Juce.Utils.Singletons;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Juce.Tween
 {
@@ -10,6 +11,10 @@ namespace Juce.Tween
         private readonly List<Tween> tweensToRemove = new List<Tween>();
 
         private float timeScale;
+
+        public long UpdateMilliseconds { get; private set; } 
+
+        protected Stopwatch updateStopwatch = new Stopwatch();
 
         public static float TimeScale
         {
@@ -43,7 +48,19 @@ namespace Juce.Tween
 
             for (int i = 0; i < aliveTweens.Count; ++i)
             {
-                //aliveTweensCount += aliveTweens[i].GetNestedTweenChildsCount() + 1;
+                aliveTweensCount += aliveTweens[i].GetTweensCount();
+            }
+
+            return aliveTweensCount;
+        }
+
+        public int GetPlayingTweensCounts()
+        {
+            int aliveTweensCount = 0;
+
+            for (int i = 0; i < aliveTweens.Count; ++i)
+            {
+                aliveTweensCount += aliveTweens[i].GetPlayingTweensCount();
             }
 
             return aliveTweensCount;
@@ -80,7 +97,9 @@ namespace Juce.Tween
 
         private void UpdateTweens()
         {
-            foreach(Tween tween in aliveTweens)
+            updateStopwatch.Restart();
+
+            foreach (Tween tween in aliveTweens)
             {
                 if(tween.IsPlaying && !tween.IsCompleted)
                 {
@@ -101,6 +120,10 @@ namespace Juce.Tween
             }
 
             tweensToRemove.Clear();
+
+            updateStopwatch.Stop();
+
+            UpdateMilliseconds = updateStopwatch.ElapsedMilliseconds;
         }
     }
 }

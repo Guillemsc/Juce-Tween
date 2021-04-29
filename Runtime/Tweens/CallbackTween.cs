@@ -24,7 +24,27 @@ namespace Juce.Tween
 
         public override void OnLoopFinished(LoopResetMode loopResetMode)
         {
+            MarkLoop();
+        }
 
+        public override float OnGetDuration()
+        {
+            return 0.0f;
+        }
+
+        public override float OnGetElapsed()
+        {
+            return 0.0f;
+        }
+
+        public override int OnGetTweensCount()
+        {
+            return 1;
+        }
+
+        public override int OnGetPlayingTweensCount()
+        {
+            return IsPlaying ? 1 : 0;
         }
 
         public override void Start()
@@ -38,7 +58,7 @@ namespace Juce.Tween
 
             action?.Invoke();
 
-            MarkFinish(canLoop: true);
+            MarkCompleted(canLoop: true);
         }
 
         public override void Update()
@@ -55,7 +75,7 @@ namespace Juce.Tween
                 action?.Invoke();
             }
 
-            MarkFinish(canLoop: false);
+            MarkCompleted(canLoop: false);
         }
 
         public override void Kill()

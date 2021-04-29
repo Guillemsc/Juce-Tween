@@ -16,6 +16,8 @@ namespace Juce.Tween
             {
                 tweener.SetEase(easeFunction);
             }
+
+            EaseFunction = easeFunction;
         }
 
         public override void OnTimeScaleChanges(float timeScale)
@@ -36,6 +38,42 @@ namespace Juce.Tween
             }
 
             StartTweeners();
+
+            MarkLoop();
+        }
+
+        public override int OnGetTweensCount()
+        {
+            return 1;
+        }
+
+        public override int OnGetPlayingTweensCount()
+        {
+            return IsPlaying ? 1 : 0;
+        }
+
+        public override float OnGetDuration()
+        {
+            float totalDuration = 0.0f;
+
+            foreach (ITweener tweener in tweeners)
+            {
+                totalDuration += tweener.Duration;
+            }
+
+            return totalDuration;
+        }
+
+        public override float OnGetElapsed()
+        {
+            float totalElapsed = 0.0f;
+
+            foreach (ITweener tweener in tweeners)
+            {
+                totalElapsed += tweener.Elapsed;
+            }
+
+            return totalElapsed;
         }
 
         public override void Start()
@@ -66,7 +104,7 @@ namespace Juce.Tween
 
             if(playingTweeners.Count == 0)
             {
-                MarkFinish(canLoop: true);
+                MarkCompleted(canLoop: true);
             }
         }
 
@@ -84,7 +122,7 @@ namespace Juce.Tween
 
             playingTweeners.Clear();
 
-            MarkFinish(canLoop: false);
+            MarkCompleted(canLoop: false);
         }
 
         public override void Kill()
@@ -149,8 +187,7 @@ namespace Juce.Tween
             {
                 ITweener tweener = playingTweeners[i];
 
-                // Set target
-
+                tweener.TimeScale = TimeScale;
                 tweener.SetEase(EaseFunction);
 
                 tweener.Start();
@@ -163,7 +200,7 @@ namespace Juce.Tween
 
             if (playingTweeners.Count == 0)
             {
-                MarkFinish(canLoop: true);
+                MarkCompleted(canLoop: true);
             }
         }
     }

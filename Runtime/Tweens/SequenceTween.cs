@@ -25,6 +25,8 @@ namespace Juce.Tween
             {
                 tween.OnEaseDelegateChanges(easeFunction);
             }
+
+            EaseFunction = easeFunction;
         }
 
         public override void OnLoopFinished(LoopResetMode loopResetMode)
@@ -37,6 +39,61 @@ namespace Juce.Tween
             }
 
             StartTweens();
+
+            MarkLoop();
+        }
+
+        public override float OnGetDuration()
+        {
+            float totalDuration = 0.0f;
+
+            foreach (Tween tween in tweenRepository.Tweens)
+            {
+                totalDuration += tween.GetDuration();
+            }
+
+            return totalDuration;
+        }
+
+        public override float OnGetElapsed()
+        {
+            float totalDuration = 0.0f;
+
+            foreach (Tween tween in tweenRepository.Tweens)
+            {
+                totalDuration += tween.GetElapsed();
+            }
+
+            return totalDuration;
+        }
+
+        public override int OnGetTweensCount()
+        {
+            int totalTweens = 1;
+
+            foreach (Tween tween in tweenRepository.Tweens)
+            {
+                totalTweens += tween.GetTweensCount();
+            }
+
+            return totalTweens;
+        }
+
+        public override int OnGetPlayingTweensCount()
+        {
+            if (!IsPlaying)
+            {
+                return 0;
+            }
+
+            int totalTweens = 1;
+
+            foreach (Tween tween in tweenRepository.Tweens)
+            {
+                totalTweens += tween.OnGetPlayingTweensCount();
+            }
+
+            return totalTweens;
         }
 
         public override void Start()
@@ -55,7 +112,7 @@ namespace Juce.Tween
         {
             if(playingTweens.Count == 0)
             {
-                MarkFinish(canLoop: true);
+                MarkCompleted(canLoop: true);
 
                 return;
             }
@@ -97,7 +154,7 @@ namespace Juce.Tween
 
             playingTweens.Clear();
 
-            MarkFinish(canLoop: false);
+            MarkCompleted(canLoop: false);
         }
 
         public override void Kill()
@@ -147,9 +204,9 @@ namespace Juce.Tween
                 return;
             }
 
-            castedTween.IsNested = true;
-
             tweenRepository.Append(castedTween);
+
+            castedTween.IsNested = true;
         }
 
         public void Join(ITween tween)
@@ -168,9 +225,9 @@ namespace Juce.Tween
                 return;
             }
 
-            castedTween.IsNested = true;
-
             tweenRepository.Join(castedTween);
+
+            castedTween.IsNested = true;
         }
 
         private void StartTweens()
@@ -182,8 +239,6 @@ namespace Juce.Tween
             {
                 Tween tween = playingTweens[i];
 
-                tween.SetEase(EaseFunction);
-
                 if (i == 0)
                 {
                     tween.Start();
@@ -192,8 +247,28 @@ namespace Juce.Tween
 
             if (playingTweens.Count == 0)
             {
-                MarkFinish(canLoop: true);
+                MarkCompleted(canLoop: true);
             }
+        }
+
+        public void AppendCallback(Action callback)
+        {
+            Append(new CallbackTween(callback));
+        }
+
+        public void JoinCallback(Action callback)
+        {
+            Join(new CallbackTween(callback));
+        }
+
+        public void AppendResetableCallback(Action callback, Action reset)
+        {
+            Append(new ResetableCallbackTween(callback, reset));
+        }
+
+        public void JoinResetableCallback(Action callback, Action reset)
+        {
+            Join(new ResetableCallbackTween(callback, reset));
         }
     }
 }
