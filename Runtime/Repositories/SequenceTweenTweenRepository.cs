@@ -19,13 +19,6 @@ namespace Juce.Tween.Repositories
 
         public void Join(Tween tween)
         {
-            if(tweens.Count == 0)
-            {
-                Append(tween);
-
-                return;
-            }
-
             if(creatingGroupTween)
             {
                 GroupTween groupTween = (GroupTween)tweens[tweens.Count - 1];

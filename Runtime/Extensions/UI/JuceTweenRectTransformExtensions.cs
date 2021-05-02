@@ -149,8 +149,79 @@ public static class JuceTweenRectTransformExtensions
     public static ITween TweenSizeDeltaY(this RectTransform rectTransform, float to, float duration)
     {
         return Tween.To(
-            () => rectTransform.sizeDelta.y, y => rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, y), 
+            () => rectTransform.sizeDelta.y, 
+            y => rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, y), 
             () => to, 
+            duration,
+            () => rectTransform != null
+            );
+    }
+
+    public static ITween TweenOffsetMax(this RectTransform rectTransform, Vector2 to, float duration)
+    {
+        return Tween.To(
+            () => rectTransform.offsetMax,
+            x => rectTransform.offsetMax = x,
+            () => to,
+            duration,
+            () => rectTransform != null
+            );
+    }
+
+    public static ITween TweenOffsetMaxX(this RectTransform rectTransform, float to, float duration)
+    {
+        return Tween.To(
+            () => rectTransform.offsetMax.x,
+            x => rectTransform.offsetMax = new Vector2(x, rectTransform.offsetMax.y),
+            () => to,
+            duration,
+            () => rectTransform != null
+            );
+    }
+
+    public static ITween TweenOffsetMaxY(this RectTransform rectTransform, float to, float duration)
+    {
+        return Tween.To(
+            () => rectTransform.offsetMax.y,
+            y => rectTransform.offsetMax = new Vector2(rectTransform.offsetMax.x, y),
+            () => to,
+            duration,
+            () => rectTransform != null
+            );
+    }
+
+    public static ITween TweenSizeWithCurrentAnchors(this RectTransform rectTransform, Vector2 to, float duration)
+    {
+        return Tween.To(
+            () => rectTransform.rect.size,
+            current =>
+            {
+                rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, current.x);
+                rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, current.y);
+            },
+            () => to,
+            duration,
+            () => rectTransform != null
+            );
+    }
+
+    public static ITween TweenSizeXWithCurrentAnchors(this RectTransform rectTransform, float to, float duration)
+    {
+        return Tween.To(
+            () => rectTransform.rect.size.x,
+            x => rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, x),
+            () => to,
+            duration,
+            () => rectTransform != null
+            );
+    }
+
+    public static ITween TweenSizeYWithCurrentAnchors(this RectTransform rectTransform, float to, float duration)
+    {
+        return Tween.To(
+            () => rectTransform.rect.size.y,
+            y => rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, y),
+            () => to,
             duration,
             () => rectTransform != null
             );

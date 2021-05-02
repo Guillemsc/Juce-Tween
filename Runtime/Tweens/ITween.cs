@@ -11,6 +11,7 @@ namespace Juce.Tween
         LoopResetMode LoopResetMode { get; }
 
         bool IsPlaying { get; }
+        bool IsCompleted { get; }
 
         event Action<float> OnTimeScaleChanged;
         event Action OnStart;
