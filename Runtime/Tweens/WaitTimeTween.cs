@@ -76,6 +76,11 @@ namespace Juce.Tween
 
         public override void Complete()
         {
+            if (!IsPlaying && !IsCompleted)
+            {
+                return;
+            }
+
             elapsed = duration;
 
             MarkCompleted(canLoop: false);

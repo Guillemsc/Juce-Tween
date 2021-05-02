@@ -142,13 +142,18 @@ namespace Juce.Tween
 
         public override void Complete()
         {
-            if (!IsPlaying)
+            if (!IsPlaying && !IsCompleted)
             {
                 Start();
             }
 
-            foreach (Tween tween in playingTweens)
+            foreach (Tween tween in tweenRepository.Tweens)
             {
+                if(!tween.IsPlaying)
+                {
+                    tween.Start();
+                }
+
                 tween.Complete();
             }
 

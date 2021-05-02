@@ -73,6 +73,11 @@ namespace Juce.Tween
                 throw new ArgumentNullException($"Tried to play a null {nameof(Tween)} on {nameof(JuceTween)} instance");
             }
 
+            if(tween.IsNested)
+            {
+                return;
+            }
+
             if(tween.IsAlive)
             {
                 Instance.TryStartTween(tween);
@@ -106,7 +111,7 @@ namespace Juce.Tween
                     tween.Update();
                 }
 
-                if(!tween.IsPlaying || tween.IsCompleted)
+                if(!tween.IsPlaying || tween.IsCompleted || tween.IsNested)
                 {
                     tweensToRemove.Add(tween);
                 }

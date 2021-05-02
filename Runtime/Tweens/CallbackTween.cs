@@ -68,11 +68,9 @@ namespace Juce.Tween
 
         public override void Complete()
         {
-            if (!IsPlaying)
+            if (!IsPlaying && !IsCompleted)
             {
-                MarkStart();
-
-                action?.Invoke();
+                Start();
             }
 
             MarkCompleted(canLoop: false);

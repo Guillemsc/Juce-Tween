@@ -73,7 +73,7 @@ namespace Juce.Tween
 
         public override void Complete()
         {
-            if (!IsPlaying)
+            if (!IsPlaying && !IsCompleted)
             {
                 MarkStart();
 
