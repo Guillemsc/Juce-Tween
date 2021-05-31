@@ -8,6 +8,7 @@ namespace Juce.Tween
     public class JuceTween : AutoStartMonoSingleton<JuceTween>
     {
         private readonly List<Tween> aliveTweens = new List<Tween>();
+        private readonly List<Tween> tweensToAdd = new List<Tween>();
         private readonly List<Tween> tweensToRemove = new List<Tween>();
 
         private float timeScale;
@@ -87,7 +88,7 @@ namespace Juce.Tween
 
             tween.IsAlive = true;
 
-            Instance.aliveTweens.Add(tween);
+            Instance.tweensToAdd.Add(tween);
 
             Instance.TryStartTween(tween);
         }
@@ -103,6 +104,13 @@ namespace Juce.Tween
         private void UpdateTweens()
         {
             updateStopwatch.Restart();
+
+            foreach(Tween tween in tweensToAdd)
+            {
+                aliveTweens.Add(tween);
+            }
+
+            tweensToAdd.Clear();
 
             foreach (Tween tween in aliveTweens)
             {
@@ -122,6 +130,7 @@ namespace Juce.Tween
                 tween.IsAlive = false;
 
                 aliveTweens.Remove(tween);
+                tweensToAdd.Remove(tween);
             }
 
             tweensToRemove.Clear();
